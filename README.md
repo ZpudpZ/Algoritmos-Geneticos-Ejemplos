@@ -7,7 +7,7 @@ Este repositorio contiene implementaciones en Python de algoritmos genéticos pa
 * [1. Selección de Características](#1-selección-de-características)
 * [2. Optimización de Hiperparámetros](#2-optimización-de-hiperparámetros)
 * [3. Neuroevolución](#3-neuroevolución)
-* [4. Requisitos y Uso](#4-requisitos-y-uso)
+* [4. Requisitos](#4-requisitos)
 
 ## 1. Selección de Características
 
@@ -29,7 +29,7 @@ Este repositorio contiene implementaciones en Python de algoritmos genéticos pa
 -   **Descripción**: Un ejemplo de cómo los algoritmos genéticos pueden ser usados para entrenar una red neuronal. El AG optimiza directamente los **pesos y sesgos** de una pequeña red neuronal diseñada para resolver la función lógica **XOR**. A diferencia de los métodos tradicionales, la red "aprende" a través de la selección y mutación, en lugar de un proceso de *backpropagation*.
 -   **Optimización**: El cromosoma es un array de números flotantes (los pesos y sesgos de la red), y la aptitud se calcula en función de qué tan bien la red minimiza el error de predicción.
 
-## 4. Requisitos y Uso
+## 4. Requisitos
 
 Para ejecutar los ejemplos, asegúrate de tener Python instalado junto con las siguientes librerías. Puedes instalarlas con `pip`:
 
