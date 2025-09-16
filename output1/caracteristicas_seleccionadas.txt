@@ -2,9 +2,6 @@ Mejor precisión (aptitud): 0.9349
 
 # Total de caracteristicas seleccionadas: 37
 
-# Índices de features seleccionadas
-0,1,2,4,5,6,9,11,13,15,16,17,18,20,21,23,24,26,28,30,31,34,35,36,38,40,41,42,44,45,46,47,48,50,51,52,55
-
 # Nombres de features
 word_freq_make
 word_freq_address

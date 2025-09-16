@@ -1,304 +1,172 @@
-<<<<<<< HEAD
+import os
+import random
+import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
 from deap import base, creator, tools, algorithms
-import random
-import matplotlib.pyplot as plt
-import numpy as np
-import os
-import joblib
 
-# --- 1. Cargar y preparar los datos ---
-FILE_PATH = "dataset/spambase.csv"
-OUTPUT_DIR = "output3"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+# --- 1. Configuración y Rutas ---
+RANDOM_SEED = 42
+random.seed(RANDOM_SEED)
+np.random.seed(RANDOM_SEED)
 
-try:
-    df = pd.read_csv(FILE_PATH, header=0)
-    X = df.iloc[:, :-1]
-    y = df.iloc[:, -1]
-    FEATURE_COUNT = X.shape[1]
-    # Obtener los nombres de las características
-    feature_names = X.columns.tolist()
+DATA_PATH = "dataset/spambase.csv"
+OUT_DIR = "output3"
+os.makedirs(OUT_DIR, exist_ok=True)
 
-    # Escalar los datos una sola vez
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
 
-    print(f"Dataset cargado y escalado con {X.shape[0]} filas y {FEATURE_COUNT} características.\n")
-except FileNotFoundError:
-    print(f"Error: No se encontró el archivo en la ruta '{FILE_PATH}'. Asegúrate de que el archivo exista.")
-    exit()
+# --- 2. Carga y Preprocesamiento de Datos ---
+def load_and_preprocess_data():
+    """Carga y prepara el dataset spambase, asegurando que todos los datos sean numéricos."""
+    try:
+        # Carga el CSV sin encabezado, ya que el archivo puede contener texto incrustado
+        df = pd.read_csv(DATA_PATH, header=None)
 
-# --- 2. Configuración del Algoritmo Genético (con DEAP) ---
+        # La solución robusta: convertir todas las columnas a numérico.
+        # Los valores no numéricos se convertirán en NaN.
+        df_numeric = df.apply(pd.to_numeric, errors='coerce')
 
-# a) Representación de la Población o Cromosomas
+        # Eliminar cualquier fila que contenga un valor NaN (es decir, una fila con texto)
+        df_clean = df_numeric.dropna(axis=0, how='any').reset_index(drop=True)
+
+        # Separar las características (X) y las etiquetas (y)
+        X = df_clean.iloc[:, :-1]
+        y = df_clean.iloc[:, -1]
+
+        # Escalar las características
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+
+        print(
+            f"[INFO] Dataset cargado y preprocesado con {X_scaled.shape[0]} filas y {X_scaled.shape[1]} características.")
+
+        return X_scaled, y
+
+    except FileNotFoundError:
+        print(f"[ERROR] No se encontró el archivo en la ruta '{DATA_PATH}'. Asegúrate de que el archivo exista.")
+        exit()
+
+
+# Cargar y dividir los datos una sola vez
+X, y = load_and_preprocess_data()
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=RANDOM_SEED, stratify=y)
+
+# --- 3. Representación del Individuo (Cromosoma) ---
+# Opciones para la arquitectura de la red neuronal
+NEURONS_OPTIONS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+ACTIVATION_OPTIONS = ['relu', 'logistic', 'tanh']
+
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", list, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
-
-# Hiperparámetros a optimizar
-C_VALUES = [0.01, 0.1, 1, 10, 100]
-SOLVER_VALUES = ['lbfgs', 'liblinear']
-
-# Atributos para la selección de características (57 bits)
-for i in range(FEATURE_COUNT):
-    toolbox.register(f"attr_feat_{i}", random.randint, 0, 1)
-
-# Atributos para los hiperparámetros (2 bits/índices)
-toolbox.register("attr_C", random.randint, 0, len(C_VALUES) - 1)
-toolbox.register("attr_solver", random.randint, 0, len(SOLVER_VALUES) - 1)
-
-# b) Inicialización
+toolbox.register("attr_neurons", random.choice, NEURONS_OPTIONS)
+toolbox.register("attr_activation", random.choice, ACTIVATION_OPTIONS)
 toolbox.register("individual", tools.initCycle, creator.Individual,
-                 (tuple(getattr(toolbox, f"attr_feat_{i}") for i in range(FEATURE_COUNT)) +
-                  (toolbox.attr_C, toolbox.attr_solver)))
+                 (toolbox.attr_neurons, toolbox.attr_activation))
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 
-# --- 3. Función de Aptitud (Fitness) ---
-def evaluate_individual(individual):
-    """
-    Evalúa la aptitud (fitness) de un individuo combinando
-    la selección de características y los hiperparámetros para entrenar el modelo.
-    """
-    feature_selection_part = individual[:FEATURE_COUNT]
-    hyperparameter_part = individual[FEATURE_COUNT:]
+# --- 4. Función de Aptitud (Fitness) ---
+def eval_individual(individual):
+    """Evalúa un individuo entrenando una MLP y devuelve su precisión."""
+    neurons = individual[0]
+    activation = individual[1]
 
-    selected_features_indices = [i for i, bit in enumerate(feature_selection_part) if bit == 1]
+    clf = MLPClassifier(hidden_layer_sizes=(neurons,),
+                        activation=activation,
+                        solver='adam',
+                        max_iter=300,
+                        random_state=RANDOM_SEED,
+                        early_stopping=True)
 
-    if not selected_features_indices:
-        return (0.0,)
+    try:
+        clf.fit(X_train, y_train)
+        preds = clf.predict(X_val)
+        acc = accuracy_score(y_val, preds)
+    except Exception as e:
+        acc = 0.0
+        print(f"[WARN] Error al evaluar individuo {individual}: {e}")
 
-    X_selected = X_scaled[:, selected_features_indices]
-
-    C = C_VALUES[hyperparameter_part[0]]
-    solver = SOLVER_VALUES[hyperparameter_part[1]]
-
-    model = LogisticRegression(C=C, solver=solver, max_iter=5000)
-
-    X_train, X_test, y_train, y_test = train_test_split(X_selected, y, test_size=0.2, random_state=42)
-    model.fit(X_train, y_train)
-
-    accuracy = accuracy_score(y_test, model.predict(X_test))
-    return (accuracy,)
+    return (acc,)
 
 
-# --- 4. Operaciones Genéticas ---
-toolbox.register("evaluate", evaluate_individual)
+toolbox.register("evaluate", eval_individual)
+
+# --- 5. Operadores Genéticos ---
 toolbox.register("select", tools.selTournament, tournsize=3)
 toolbox.register("mate", tools.cxUniform, indpb=0.5)
-toolbox.register("mutate", tools.mutFlipBit, indpb=0.1)
 
 
-# --- 5. Ciclo de Vida del Algoritmo Genético ---
+def mutate_individual(individual):
+    """Mutación: cambia neuronas o activación con cierta probabilidad."""
+    if random.random() < 0.5:
+        individual[0] = random.choice(NEURONS_OPTIONS)
+    if random.random() < 0.5:
+        individual[1] = random.choice(ACTIVATION_OPTIONS)
+    return individual,
+
+
+toolbox.register("mutate", mutate_individual)
+
+
+# --- 6. Ejecución del Algoritmo Genético ---
 def main():
-    random.seed(42)
+    POP_SIZE = 50
+    CX_PB = 0.7
+    MUT_PB = 0.2
+    NGEN = 50
 
-    POPULATION_SIZE = 100
-    GENERATIONS = 50
-    CX_PROB = 0.7
-    MUT_PROB = 0.5
-
-    pop = toolbox.population(n=POPULATION_SIZE)
+    pop = toolbox.population(n=POP_SIZE)
     hof = tools.HallOfFame(1)
-
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", np.mean)
     stats.register("max", np.max)
 
-    pop, log = algorithms.eaSimple(pop, toolbox,
-                                   cxpb=CX_PROB, mutpb=MUT_PROB,
-                                   ngen=GENERATIONS,
-                                   stats=stats,
-                                   halloffame=hof, verbose=False)
+    print("[INFO] Iniciando evolución...")
+    pop, log = algorithms.eaSimple(pop, toolbox, cxpb=CX_PB, mutpb=MUT_PB,
+                                   ngen=NGEN, stats=stats, halloffame=hof,
+                                   verbose=False)
 
-    # --- 6. Guardar los resultados ---
-    best_individual_raw = hof[0]
-    best_accuracy = best_individual_raw.fitness.values[0]
+    # --- 7. Guardar Resultados ---
+    best_ind = hof[0]
+    best_neurons = best_ind[0]
+    best_activation = best_ind[1]
+    best_fitness = best_ind.fitness.values[0]
 
-    # Descomponer el mejor individuo en sus partes
-    best_feature_selection = best_individual_raw[:FEATURE_COUNT]
-    best_hyperparameters = best_individual_raw[FEATURE_COUNT:]
+    # Guardar log en CSV
+    log_df = pd.DataFrame(log)
+    log_df.to_csv(os.path.join(OUT_DIR, "evolucion_log.csv"), index=False)
 
-    selected_features_indices = [i for i, bit in enumerate(best_feature_selection) if bit == 1]
-    selected_features_count = len(selected_features_indices)
-    selected_names = [feature_names[i] for i in selected_features_indices]
-
-    best_C = C_VALUES[best_hyperparameters[0]]
-    best_solver = SOLVER_VALUES[best_hyperparameters[1]]
-
-    print("\n--- Resultados del Algoritmo Genético Combinado ---")
-    print(f"Mejor precisión (aptitud): {best_accuracy:.4f}")
-    print(f"Número de características seleccionadas: {selected_features_count}")
-    print("Mejor combinación de hiperparámetros:")
-    print(f"  - C: {best_C}")
-    print(f"  - solver: {best_solver}")
-
-    # a. Guardar los resultados en un archivo de texto
-    with open(os.path.join(OUTPUT_DIR, "resultados_combinados.txt"), "w") as f:
-        f.write(f"Mejor precisión (aptitud): {best_accuracy:.4f}\n\n")
-        f.write("Mejor combinación de hiperparámetros:\n")
-        f.write(f"  - C: {best_C}\n")
-        f.write(f"  - solver: {best_solver}\n\n")
-
-        f.write(f"# Total de caracteristicas seleccionadas: {selected_features_count}\n\n")
-        f.write("# Nombres de caracteristicas seleccionadas\n")
-        f.write("\n".join(selected_names))
-        f.write("\n\n")
-        f.write("# Indices de caracteristicas seleccionadas\n")
-        f.write(",".join(map(str, selected_features_indices)))
-
-    # b. Generar gráfico de convergencia
-    gen = log.select("gen")
-    avg_fitness = log.select("avg")
-    max_fitness = log.select("max")
-
+    # Graficar la evolución
+    gens = log_df['gen']
+    max_fitness = log_df['max']
+    avg_fitness = log_df['avg']
     plt.figure(figsize=(8, 5))
-    plt.plot(gen, avg_fitness, label="Aptitud Promedio")
-    plt.plot(gen, max_fitness, label="Aptitud Máxima")
+    plt.plot(gens, max_fitness, label="Aptitud Máxima")
+    plt.plot(gens, avg_fitness, label="Aptitud Promedio")
+    plt.title("Evolución de la Aptitud")
     plt.xlabel("Generación")
     plt.ylabel("Precisión")
-    plt.title("Convergencia del Algoritmo Genético (Combinado)")
     plt.legend()
     plt.grid(True)
-    plt.savefig(os.path.join(OUTPUT_DIR, "combinado_convergencia.png"))
+    plt.savefig(os.path.join(OUT_DIR, "evolucion_aptitud.png"))
     plt.close()
 
-    # c. Generar el log en CSV
-    log_df = pd.DataFrame(log)
-    log_df.to_csv(os.path.join(OUTPUT_DIR, "combinado_log.csv"), index=False)
+    # Guardar el mejor resultado
+    with open(os.path.join(OUT_DIR, "mejor_arquitectura.txt"), "w") as f:
+        f.write("--- Mejor Arquitectura Encontrada ---\n")
+        f.write(f"Neuronas: {best_neurons}\n")
+        f.write(f"Activación: {best_activation}\n")
+        f.write(f"Precisión de Validación: {best_fitness:.4f}\n")
 
-    print(f"\nResultados guardados en la carpeta '{OUTPUT_DIR}':")
-    print("- resultados_combinados.txt")
-    print("- combinado_convergencia.png")
-    print("- combinado_log.csv")
+    print("\n[INFO] Proceso de neuroevolución completado. Resultados en la carpeta 'output3'.")
+    print(f"Mejor arquitectura: {best_ind} con precisión: {best_fitness:.4f}")
 
 
 if __name__ == "__main__":
     main()
-=======
-#Ejemplo para Neuroevolución (Neuroevolution)
-import numpy as np
-import matplotlib.pyplot as plt
-
-# Parámetros del algoritmo genético
-TAMANO_POBLACION = 50
-GENERACIONES = 100
-TASA_MUTACION = 0.05
-LONGITUD_CROMOSOMA = 9
-
-entradas_xor = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-salidas_xor = np.array([[0], [1], [1], [0]])
-
-
-def crear_individuo():
-    return np.random.uniform(-1, 1, size=LONGITUD_CROMOSOMA)
-
-
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
-
-
-def calcular_aptitud(individuo):
-    w_oculta = individuo[0:4].reshape(2, 2)
-    b_oculta = individuo[4:6].reshape(1, 2)
-    w_salida = individuo[6:8].reshape(2, 1)
-    b_salida = individuo[8]
-
-    capa_oculta_activacion = sigmoid(np.dot(entradas_xor, w_oculta) + b_oculta)
-    salida_predicha = sigmoid(np.dot(capa_oculta_activacion, w_salida) + b_salida)
-
-    error = np.sum(np.abs(salida_predicha - salidas_xor))
-
-    return 1 / (1 + error)
-
-
-def seleccionar_padres(poblacion, puntajes_aptitud):
-    total_aptitud = sum(puntajes_aptitud)
-    if total_aptitud == 0:
-        total_aptitud = 1
-
-    probabilidades = [score / total_aptitud for score in puntajes_aptitud]
-    parent_indices = np.random.choice(range(TAMANO_POBLACION), size=2, p=probabilidades, replace=False)
-
-    return poblacion[parent_indices[0]], poblacion[parent_indices[1]]
-
-
-def cruzar(padre1, padre2):
-    crossover_point = np.random.randint(1, LONGITUD_CROMOSOMA - 1)
-    hijo1 = np.concatenate((padre1[:crossover_point], padre2[crossover_point:]))
-    hijo2 = np.concatenate((padre2[:crossover_point], padre1[crossover_point:]))
-    return hijo1, hijo2
-
-
-def mutar(individual):
-    for i in range(LONGITUD_CROMOSOMA):
-        if np.random.rand() < TASA_MUTACION:
-            individual[i] += np.random.uniform(-0.5, 0.5)
-    return individual
-
-
-# Bucle principal del algoritmo genético
-poblacion = [crear_individuo() for _ in range(TAMANO_POBLACION)]
-mejor_aptitud_por_generacion = []
-aptitud_promedio_por_generacion = []
-mejor_solucion_por_generacion = []
-
-for generacion in range(GENERACIONES):
-    puntajes_aptitud = [calcular_aptitud(individuo) for individuo in poblacion]
-
-    indice_mejor_individuo = np.argmax(puntajes_aptitud)
-    mejor_individuo_actual = poblacion[indice_mejor_individuo]
-    mejor_aptitud = puntajes_aptitud[indice_mejor_individuo]
-    aptitud_promedio = np.mean(puntajes_aptitud)
-
-    mejor_aptitud_por_generacion.append(mejor_aptitud)
-    aptitud_promedio_por_generacion.append(aptitud_promedio)
-    mejor_solucion_por_generacion.append(mejor_individuo_actual)
-
-    print(
-        f"Generación {generacion + 1}/{GENERACIONES}: Mejor Aptitud = {mejor_aptitud:.4f}, Precisión Promedio = {aptitud_promedio:.4f}")
-
-    nueva_poblacion = []
-
-    nueva_poblacion.append(poblacion[indice_mejor_individuo])
-
-    while len(nueva_poblacion) < TAMANO_POBLACION:
-        padre1, padre2 = seleccionar_padres(poblacion, puntajes_aptitud)
-        hijo1, hijo2 = cruzar(padre1, padre2)
-
-        hijo_mutado1 = mutar(hijo1)
-        hijo_mutado2 = mutar(hijo2)
-
-        nueva_poblacion.append(hijo_mutado1)
-        if len(nueva_poblacion) < TAMANO_POBLACION:
-            nueva_poblacion.append(hijo_mutado2)
-
-    poblacion = nueva_poblacion
-
-# Resultados y visualización final
-mejor_solucion_final = mejor_solucion_por_generacion[-1]
-mejor_aptitud_final = mejor_aptitud_por_generacion[-1]
-
-print("\n--- Resultados Finales ---")
-print(f"Mejor combinación de pesos y sesgos (cromosoma): {mejor_solucion_final}")
-print(f"Aptitud final (inversamente proporcional al error): {mejor_aptitud_final:.4f}")
-
-# Gráfico de la evolución de la aptitud
-plt.figure(figsize=(10, 6))
-plt.plot(range(GENERACIONES), mejor_aptitud_por_generacion, label='Mejor Aptitud por Generación', color='blue',
-         marker='o', markersize=4)
-plt.plot(range(GENERACIONES), aptitud_promedio_por_generacion, label='Aptitud Promedio por Generación', color='orange',
-         linestyle='--')
-plt.title('Evolución de la Aptitud de la Red Neuronal')
-plt.xlabel('Generación')
-plt.ylabel('Aptitud')
-plt.grid(True)
-plt.legend()
-plt.show()
->>>>>>> 2740597be5639a45d2d1d2b29c85c1498821d449

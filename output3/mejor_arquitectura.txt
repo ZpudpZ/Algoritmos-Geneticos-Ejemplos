@@ -1,0 +1,4 @@
+--- Mejor Arquitectura Encontrada ---
+Neuronas: 30
+Activación: relu
+Precisión de Validación: 0.9359
