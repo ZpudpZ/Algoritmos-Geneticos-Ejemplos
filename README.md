@@ -1,4 +1,4 @@
-# 🚀 Optimización de Modelos de Machine Learning con Algoritmos Genéticos  
+# Algoritmos Genéticos
 
 ## 📌 Descripción del Proyecto  
 Este repositorio contiene la implementación de **tres algoritmos genéticos** para la optimización de un modelo de **Regresión Logística**.  
@@ -20,11 +20,11 @@ El proyecto aborda la optimización en **tres fases**, cada una con un enfoque d
 ## 📂 Estructura del Repositorio  
 ```bash
 .
-├── 1_Feature_Selection.py            # Script para la selección de características
-├── 2_Hyperparameter_Optimization.py  # Script para la optimización de hiperparámetros
-├── 3_Combined_Optimization.py        # Script para la optimización combinada
+├── 1_Feature_Selection.py
+├── 2_Hyperparameter_Optimization.py
+├── 3_Neuroevolution.py
 ├── dataset/
-│   └── spambase.csv                  # Dataset SpamBase
+│   └── spambase.csv
 └── README.md
 ```
 ⚡ Las carpetas de salida (output1, output2, output3) se crean automáticamente al ejecutar los scripts y contienen resultados, gráficos y logs de cada experimento.
@@ -61,8 +61,10 @@ python 3_Combined_Optimization.py
 
     hiperparametros_convergencia.png → Gráfico de la evolución de la precisión.
 
-  📁 output3/ (Optimización Combinada)
+  📁 output3/ (Neuroevolución)
 
-    resultados_combinados.txt → Precisión, características seleccionadas e hiperparámetros óptimos.
-    
-    combinado_convergencia.png → Gráfico de la evolución de la precisión.
+    mejor_arquitectura.txt: Archivo de texto que detalla la precisión y la mejor arquitectura de la red neuronal (número de neuronas y función de activación).
+
+      evolucion_aptitud.png: Gráfico que muestra el progreso de la aptitud máxima y promedio de la población de redes neuronales.
+
+      evolucion_log.csv: Un registro en CSV de la evolución del proceso de neuroevolución.
