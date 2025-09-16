@@ -1,0 +1,45 @@
+Mejor precisión (aptitud): 0.9349
+
+# Total de caracteristicas seleccionadas: 37
+
+# Índices de features seleccionadas
+0,1,2,4,5,6,9,11,13,15,16,17,18,20,21,23,24,26,28,30,31,34,35,36,38,40,41,42,44,45,46,47,48,50,51,52,55
+
+# Nombres de features
+word_freq_make
+word_freq_address
+word_freq_all
+word_freq_our
+word_freq_over
+word_freq_remove
+word_freq_mail
+word_freq_will
+word_freq_report
+word_freq_free
+word_freq_business
+word_freq_email
+word_freq_you
+word_freq_your
+word_freq_font
+word_freq_money
+word_freq_hp
+word_freq_george
+word_freq_lab
+word_freq_telnet
+word_freq_857
+word_freq_85
+word_freq_technology
+word_freq_1999
+word_freq_pm
+word_freq_cs
+word_freq_meeting
+word_freq_original
+word_freq_re
+word_freq_edu
+word_freq_table
+word_freq_conference
+char_freq_;
+char_freq_[
+char_freq_!
+char_freq_$
+capital_run_length_longest

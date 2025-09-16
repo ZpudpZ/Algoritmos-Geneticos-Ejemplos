@@ -1,0 +1,5 @@
+Mejor precisión (aptitud): 0.9197
+
+Mejor combinación de hiperparámetros:
+  - C: 1
+  - solver: lbfgs
