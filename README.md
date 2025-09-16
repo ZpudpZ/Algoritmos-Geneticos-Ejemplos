@@ -1,38 +1,68 @@
-# Algoritmos-Geneticos-Ejemplos
-Este repositorio contiene implementaciones en Python de algoritmos genéticos. Incluye ejemplos de Feature Selection, Hyperparameter Optimization y Neuroevolution.
-# Ejemplos de Algoritmos Genéticos en Python
+# 🚀 Optimización de Modelos de Machine Learning con Algoritmos Genéticos  
 
-## 📜 Contenido
+## 📌 Descripción del Proyecto  
+Este repositorio contiene la implementación de **tres algoritmos genéticos** para la optimización de un modelo de **Regresión Logística**.  
+El objetivo es **mejorar el rendimiento del modelo** para clasificar correos electrónicos como **spam o no spam**, utilizando el dataset **SpamBase**.  
 
-* [1. Selección de Características](#1-selección-de-características)
-* [2. Optimización de Hiperparámetros](#2-optimización-de-hiperparámetros)
-* [3. Neuroevolución](#3-neuroevolución)
-* [4. Requisitos](#4-requisitos)
+El proyecto aborda la optimización en **tres fases**, cada una con un enfoque distinto para mostrar la versatilidad de los algoritmos genéticos:  
 
-## 1. Selección de Características
+1. **Selección de Características**  
+   - Un algoritmo genético identifica el subconjunto de características más relevantes del dataset, eliminando ruido y mejorando la eficiencia.  
 
--   **Archivo**: `1_Feature Selection.py`
--   **Descripción**: Este script utiliza un algoritmo genético para identificar el subconjunto de características más relevante del conjunto de datos de Iris. El objetivo es maximizar la **precisión** de un modelo de Regresión Logística, demostrando cómo el AG puede simplificar modelos y mejorar su rendimiento al eliminar datos irrelevantes.
--   **Optimización**: El AG busca la mejor combinación de `0`s y `1`s, donde cada bit representa si una característica es seleccionada o no.
+2. **Optimización de Hiperparámetros**  
+   - El algoritmo encuentra la mejor combinación de hiperparámetros (`C` y `solver`) para el modelo de Regresión Logística.  
 
----
-## 2. Optimización de Hiperparámetros
-
--   **Archivo**: `2_Hyperparameter Optimization.py`
--   **Descripción**: Este ejemplo se centra en el ajuste fino de un clasificador K-Vecinos Más Cercanos (K-NN). El algoritmo genético optimiza los valores de los hiperparámetros `n_neighbors` (número de vecinos) y `p` (tipo de distancia) para lograr la mayor **precisión** del modelo.
--   **Optimización**: El cromosoma del AG representa una combinación de hiperparámetros. El `fitness` se mide por la precisión del modelo K-NN con esa combinación.
+3. **Optimización Combinada**  
+   - Busca simultáneamente el mejor subconjunto de características y la combinación óptima de hiperparámetros para **maximizar la precisión**.  
 
 ---
-## 3. Neuroevolución
 
--   **Archivo**: `3_Neuroevolution.py`
--   **Descripción**: Un ejemplo de cómo los algoritmos genéticos pueden ser usados para entrenar una red neuronal. El AG optimiza directamente los **pesos y sesgos** de una pequeña red neuronal diseñada para resolver la función lógica **XOR**. A diferencia de los métodos tradicionales, la red "aprende" a través de la selección y mutación, en lugar de un proceso de *backpropagation*.
--   **Optimización**: El cromosoma es un array de números flotantes (los pesos y sesgos de la red), y la aptitud se calcula en función de qué tan bien la red minimiza el error de predicción.
-
-## 4. Requisitos
-
-Para ejecutar los ejemplos, asegúrate de tener Python instalado junto con las siguientes librerías. Puedes instalarlas con `pip`:
-
+## 📂 Estructura del Repositorio  
 ```bash
-pip install numpy scikit-learn matplotlib
+.
+├── 1_Feature_Selection.py            # Script para la selección de características
+├── 2_Hyperparameter_Optimization.py  # Script para la optimización de hiperparámetros
+├── 3_Combined_Optimization.py        # Script para la optimización combinada
+├── dataset/
+│   └── spambase.csv                  # Dataset SpamBase
+└── README.md
 ```
+⚡ Las carpetas de salida (output1, output2, output3) se crean automáticamente al ejecutar los scripts y contienen resultados, gráficos y logs de cada experimento.
+
+📊 Dataset
+El dataset utilizado es SpamBase, un conjunto de datos de clasificación de correos electrónicos con 57 características que permiten predecir si un email es spam o no.
+
+📎 Fuente: SpamBase Dataset en Kaggle ( https://www.kaggle.com/datasets/colormap/spambase )
+
+⚙️ Requisitos
+
+Asegúrate de tener Python 3 instalado. Luego, instala las dependencias con:
+```bash
+pip install pandas scikit-learn deap matplotlib numpy
+```
+▶️ Cómo Ejecutar
+
+Ejecuta cada script desde la terminal:
+```bash
+python 1_Feature_Selection.py
+python 2_Hyperparameter_Optimization.py
+python 3_Combined_Optimization.py
+```
+📑 Resultados y Archivos Generados
+  📁 output1/ (Selección de Características)
+
+    caracteristicas_seleccionadas.txt → Precisión, cantidad y nombres de las características óptimas.
+
+    ga_convergencia.png → Gráfico de la evolución de la precisión.
+
+  📁 output2/ (Optimización de Hiperparámetros)
+
+    mejores_hiperparametros.txt → Precisión y mejor combinación de C y solver.
+
+    hiperparametros_convergencia.png → Gráfico de la evolución de la precisión.
+
+  📁 output3/ (Optimización Combinada)
+
+    resultados_combinados.txt → Precisión, características seleccionadas e hiperparámetros óptimos.
+    
+    combinado_convergencia.png → Gráfico de la evolución de la precisión.
