@@ -12,8 +12,8 @@ El proyecto aborda la optimización en **tres fases**, cada una con un enfoque d
 2. **Optimización de Hiperparámetros**  
    - El algoritmo encuentra la mejor combinación de hiperparámetros (`C` y `solver`) para el modelo de Regresión Logística.  
 
-3. **Optimización Combinada**  
-   - Busca simultáneamente el mejor subconjunto de características y la combinación óptima de hiperparámetros para **maximizar la precisión**.  
+3. **Neuroevolución**  
+   - Aplica un AG para optimizar la arquitectura de una red neuronal, buscando la mejor configuración de neuronas y función de activación.**.  
 
 ---
 
@@ -46,7 +46,7 @@ Ejecuta cada script desde la terminal:
 ```bash
 python 1_Feature_Selection.py
 python 2_Hyperparameter_Optimization.py
-python 3_Combined_Optimization.py
+python 3_Neuroevolution.py
 ```
 📑 Resultados y Archivos Generados
   📁 output1/ (Selección de Características)
@@ -63,7 +63,7 @@ python 3_Combined_Optimization.py
 
   📁 output3/ (Neuroevolución)
 
-    mejor_arquitectura.txt: Archivo de texto que detalla la precisión y la mejor arquitectura de la red neuronal (número de neuronas y función de activación).
+      mejor_arquitectura.txt: Archivo de texto que detalla la precisión y la mejor arquitectura de la red neuronal (número de neuronas y función de activación).
 
       evolucion_aptitud.png: Gráfico que muestra el progreso de la aptitud máxima y promedio de la población de redes neuronales.
 
