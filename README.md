@@ -49,6 +49,7 @@ python 2_Hyperparameter_Optimization.py
 python 3_Neuroevolution.py
 ```
 📑 Resultados y Archivos Generados
+  
   📁 output1/ (Selección de Características)
 
     caracteristicas_seleccionadas.txt → Precisión, cantidad y nombres de las características óptimas.
